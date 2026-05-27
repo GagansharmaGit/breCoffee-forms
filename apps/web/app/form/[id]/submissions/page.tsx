@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Download, BarChart2, Users, Clock } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 import { useGetSubmissionsByFormId } from "~/hooks/api/form-submission";
 import { useGetFields } from "~/hooks/api/form-field";
@@ -31,6 +32,19 @@ export default function FormSubmissions() {
         () => [...(fields ?? [])].sort((a, b) => parseFloat(a.index) - parseFloat(b.index)),
         [fields],
     );
+
+    const chartData = useMemo(() => {
+        const counts: Record<string, number> = {};
+        const sortedSubmissions = [...rows].sort((a, b) => {
+            return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        });
+        sortedSubmissions.forEach((r) => {
+            if (!r.createdAt) return;
+            const dateStr = new Date(r.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+            counts[dateStr] = (counts[dateStr] || 0) + 1;
+        });
+        return Object.entries(counts).map(([date, count]) => ({ date, count }));
+    }, [rows]);
 
     const loading = subsLoading || fieldsLoading || formLoading;
 
@@ -149,6 +163,34 @@ export default function FormSubmissions() {
                         </div>
                     </div>
                 </div>
+
+                {/* Analytics Chart */}
+                {rows.length > 0 && (
+                    <div className="border-2 border-foreground bg-card p-6 rounded-xl shadow-[4px_4px_0_0_var(--color-foreground)] mb-8">
+                        <h2 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                            <BarChart2 className="w-5 h-5" />
+                            Submission Trend
+                        </h2>
+                        <div className="h-[250px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="date" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} />
+                                    <YAxis stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: "var(--color-card)",
+                                            borderColor: "var(--color-foreground)",
+                                            borderRadius: "8px",
+                                            borderWidth: "2px"
+                                        }}
+                                    />
+                                    <Bar dataKey="count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                )}
 
                 {/* Table */}
                 {rows.length === 0 ? (

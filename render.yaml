@@ -3,11 +3,11 @@ services:
     name: brewcoffee-api
     env: node
     plan: free
-    buildCommand: pnpm install && pnpm build --filter=@repo/api...
-    startCommand: pnpm --filter=@repo/database run db:migrate && pnpm --filter=@repo/api run start
+    buildCommand: pnpm install && pnpm build --filter=@repo/api... && pnpm db:generate --filter=@repo/database && pnpm db:migrate --filter=@repo/database
+    startCommand: pnpm start --filter=@repo/api
     envVars:
       - key: DATABASE_URL
-        sync: false
+        value: postgresql://brewcoffee_user:RshRz9jfQnQJqHeXLiKkMSyJD19EiYrE@dpg-d8bhvcuq1p3s73fuhg60-a/brewcoffee # Render Internal URL
       - key: PORT
         value: 5001
       - key: JWT_SECRET
@@ -18,7 +18,7 @@ services:
     env: node
     plan: free
     buildCommand: pnpm install && pnpm build --filter=web...
-    startCommand: pnpm --filter=web run start
+    startCommand: pnpm start --filter=web
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://brewcoffee-api.onrender.com # Change this if you rename your API service

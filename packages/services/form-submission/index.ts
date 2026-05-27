@@ -1,10 +1,20 @@
 import { db, eq } from "@repo/database";
 import { formSubmissionsTable } from "@repo/database/models/form-submission";
+import { formsTable } from "@repo/database/models/form";
 import { createSubmissionInput, CreateSubmissionInputType } from "./model";
 
 export default class FormSubmissionService {
     public async createSubmission(payload: CreateSubmissionInputType) {
         const { formId, values } = await createSubmissionInput.parseAsync(payload);
+
+        const formResult = await db.select().from(formsTable).where(eq(formsTable.id, formId));
+        if (!formResult || formResult.length === 0) {
+            throw new Error("Form not found");
+        }
+        
+        if (formResult[0]!.status !== "PUBLISHED") {
+            throw new Error("Cannot submit to an unpublished form");
+        }
 
         const result = await db
             .insert(formSubmissionsTable)

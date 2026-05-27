@@ -4,6 +4,7 @@ import { formsTable } from "./models/form";
 import { formFieldsTable } from "./models/form-field";
 import { formSubmissionsTable } from "./models/form-submission";
 import { randomUUID } from "crypto";
+import bcrypt from "bcryptjs";
 
 async function main() {
     console.log("Seeding database...");
@@ -18,10 +19,11 @@ async function main() {
             user = existingUsers[0];
             console.log("User already exists, using existing user.");
         } else {
+            const passwordHash = await bcrypt.hash("demo1234", 10);
             const [newUser] = await db.insert(usersTable).values({
                 fullName: "Demo User",
                 email: "demo@brewcoffee.com",
-                passwordHash: "hashedpassword123", // Mock password
+                passwordHash,
             }).returning();
             user = newUser;
         }
